@@ -2,8 +2,11 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -12,14 +15,27 @@ type Config struct {
 	Environment    string
 	// MongodbUrl          string
 	// MongodbPassword     string
-	SupbaseUrl          string
-	SupabaseAccessToken string
-	SupabaseToken       string
-	FrontEndUrl         string
+	SupbaseUrl string
+	// SupabaseAccessToken string
+	SupabaseAnonKey string
+	FrontEndUrl     string
 }
 
 func LoadConfig() (*Config, error) {
 	env := strings.TrimSpace(getEnvWithDefaultValue("ENVIRONMENT", "development"))
+
+	switch env {
+	case "development":
+		if err := godotenv.Load(".env.local"); err != nil {
+			fmt.Printf("Warning: Could not load .env.local: %v\n", err)
+		}
+	case "production":
+		if err := godotenv.Load(".env.production"); err != nil {
+			log.Fatalf("Fatal Error: Could not load .env.production: %v", err)
+		}
+
+	}
+
 	cfg := &Config{
 		Port:        getEnvWithDefaultValue("PORT", "8080"),
 		Environment: env,
@@ -27,8 +43,8 @@ func LoadConfig() (*Config, error) {
 		// MongodbPassword:     os.Getenv("MONGODB_PASSWORD"),
 		SupbaseUrl: os.Getenv("SUPABASE_URL"),
 		// SupabaseAccessToken: os.Getenv("SUPABASE_ACCESS_TOKEN"),
-		SupabaseToken: os.Getenv("SUPABASE_ANON_TOKEN"),
-		FrontEndUrl:   getEnvWithDefaultValue("FRONTEND_URL", "http://localhost:8080"),
+		SupabaseAnonKey: os.Getenv("SUPABASE_ANON_KEY"),
+		FrontEndUrl:     getEnvWithDefaultValue("FRONTEND_URL", "http://localhost:8080"),
 	}
 
 	allowedOrigins := strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS"))
@@ -49,11 +65,11 @@ func LoadConfig() (*Config, error) {
 	// if cfg.MongodbUrl == "" {
 	// 	return nil, fmt.Errorf("failed to load mongodb url")
 	// }
-	if cfg.SupabaseAccessToken == "" {
-		return nil, fmt.Errorf("failed to load the supabase access token")
-	}
-
-	if cfg.SupabaseToken == "" {
+	// if cfg.SupabaseAccessToken == "" {
+	// 	return nil, fmt.Errorf("failed to load the supabase access token")
+	// }
+	//
+	if cfg.SupabaseAnonKey == "" {
 		return nil, fmt.Errorf("failed to load the supabase token")
 	}
 

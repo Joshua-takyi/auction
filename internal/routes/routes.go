@@ -24,7 +24,6 @@ func SetupRoutes(cfg config.Config, container *container.Container) *gin.Engine 
 			"message": "health is working",
 		})
 	})
-	// v1 := "/api/v0.0.0"
 
 	return r
 }

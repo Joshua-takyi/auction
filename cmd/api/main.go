@@ -6,27 +6,26 @@ import (
 	"auction/internal/container"
 	"auction/internal/routes"
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/lmittmann/tint"
 )
 
 func main() {
-	loadLocalEnv()
 
 	cfg, err := config.LoadConfig()
-	logger := setUpLogger(cfg)
 	if err != nil {
-		logger.Error("failed to load the config file", "error", err)
+		slog.Error("failed to load the config file", "error", err)
 		os.Exit(1)
 	}
+	logger := setUpLogger(cfg)
+
 	// _, err = connect.MongoDbConnect(cfg.MongodbUrl, cfg.MongodbPassword)
 	// if err != nil {
 	// 	logger.Error("failed to connect to mongodb", "error", err)
@@ -34,7 +33,7 @@ func main() {
 	// }
 	// logger.Info("mongodb connected successfully")
 
-	_, err = connect.ConnectSupabase(cfg.SupbaseUrl, cfg.SupabaseToken)
+	_, err = connect.ConnectSupabase(cfg.SupbaseUrl, cfg.SupabaseAnonKey)
 	if err != nil {
 		logger.Error("failed to connect to supabase servers", "error", err)
 		os.Exit(1)
@@ -47,8 +46,9 @@ func main() {
 		os.Exit(1)
 	}
 	router := routes.SetupRoutes(*cfg, appContainer)
+	add := fmt.Sprintf(":%s", cfg.Port)
 	server := &http.Server{
-		Addr:         cfg.Port,
+		Addr:         add,
 		Handler:      router,
 		ReadTimeout:  time.Second * 10,
 		IdleTimeout:  time.Second * 10,
@@ -86,19 +86,6 @@ func main() {
 
 	if err := connect.DisconnectSupabase(); err != nil {
 		logger.Error("failed to disconnect supabase", "error", err)
-	}
-}
-
-func loadLocalEnv() {
-	env := strings.ToLower(strings.TrimSpace(os.Getenv("ENVIRONMENT")))
-	if env == "production" {
-		return
-	}
-
-	if _, err := os.Stat(".env.local"); err == nil {
-		if err := godotenv.Load(".env.local"); err != nil {
-			slog.Warn("Failed to load .env.local", "error", err)
-		}
 	}
 }
 
