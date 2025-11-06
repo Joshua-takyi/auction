@@ -1,0 +1,5 @@
+.env.local
+.env.production
+qwen.md
+server
+/tmp
